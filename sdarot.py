@@ -2,6 +2,7 @@ import requests
 import time
 import os
 from tqdm import tqdm
+from alive_progress import alive_bar
 from os.path import join
 from lxml import html
 
@@ -75,16 +76,17 @@ class SdarotPy:
         # read 1024 bytes every time
         buffer_size = 1024
         # progress bar, changing the unit to bytes instead of iteration (default by tqdm)
-        progress = tqdm(res.iter_content(buffer_size),
-                        f"Downloading {filename}", total=file_size, unit="B", unit_scale=True, unit_divisor=1024)
-        with open(join(episode_path, filename), "wb") as f:
-            for data in progress:
-                # write data read to the file
-                f.write(data)
-                # update the progress bar manually
-                if(len(data) != 0):
-                    progress.update(len(data))
-        progress.close()
+        # progress = tqdm(res.iter_content(buffer_size), f"Downloading {filename}", total=file_size, unit="B", unit_scale=True, unit_divisor=1024)
+        with alive_bar(file_size) as bar:
+            with open(join(episode_path, filename), "wb") as f:
+                for data in res.iter_content(buffer_size):
+                    # write data read to the file
+                    f.write(data)
+                    # update the progress bar manually
+                    if(len(data) != 0):
+                        bar(incr=len(data))
+                        # progress.update(len(data))
+            # progress.close()
 
         return True
 
